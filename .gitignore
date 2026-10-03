@@ -1,0 +1,52 @@
+# TLS / SSL Private Keys & Certificates
+*.key
+*.pem
+*.crt
+*.csr
+*.pfx
+*.p12
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDEs & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
