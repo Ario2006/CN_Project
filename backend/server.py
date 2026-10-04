@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """Minimal REST backend for the CN project (the network is the project, not this app).
+Subnet: 10.7.0.0/19 | Netmask: 255.255.224.0 (0xffffe000) | Gateway: 10.7.0.1
+Hosts:
+  Backend A (Mac 3, Abhijeet): 10.7.2.73:3001  | Air MAC: 8e:c9:23:39:6e:c1 | HW MAC: 10:9f:41:c0:b2:b1
+  Backend B (Mac 4, Ankita)  : 10.7.5.46:3002  | Air MAC: da:8e:64:df:05:3f | HW MAC: 10:9f:41:c6:2a:38
 Env: BACKEND_ID (A/B), PORT (3001/3002), BIND (default 0.0.0.0 = all interfaces, LAN reachable)."""
 import json
 import os
