@@ -14,6 +14,7 @@ cat > "$ROOT/dns/team-dnsmasq.conf" <<EOF
 port=53
 listen-address=127.0.0.1,${MAC1_IP}
 bind-interfaces
+interface=${IFACE}
 # Do not read /etc/resolv.conf or /etc/hosts: only what is written here + explicit upstreams
 no-resolv
 no-hosts
@@ -23,8 +24,8 @@ server=${UPSTREAM_DNS_2}
 local=/${DOMAIN}/
 local-ttl=30
 # Route edge traffic to Mac 2 (Ranajeet, ${MAC2_IP}, Air MAC: ${MAC2_AIR_MAC})
-host-record=app.${DOMAIN},${MAC2_IP}
-host-record=api.${DOMAIN},${MAC2_IP}
+address=/app.${DOMAIN}/${MAC2_IP}
+address=/api.${DOMAIN}/${MAC2_IP}
 # Log every query to the terminal (great live evidence)
 log-queries
 log-facility=-
