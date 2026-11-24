@@ -17,8 +17,8 @@ export BROADCAST="10.7.31.255"
 # ---- Real IP Addresses ----
 export MAC1_IP="10.7.20.4"              # Aryan     - DNS (dnsmasq) + test client
 export MAC2_IP="10.7.26.115"            # Ranajeet  - nginx edge / LB / TLS
-export MAC3_IP="10.7.18.174"            # Abhijeet  - Backend A :3001 + backup DNS
-export MAC4_IP="10.7.17.93"             # Ankita    - Backend B :3002 + standby edge + client
+export MAC3_IP="10.7.18.174"            # Abhijeet  - Backend A :3001 + backup DNS + standby edge
+export MAC4_IP="10.7.17.93"             # Ankita    - Backend B :3002 + test client
 
 # ---- Real On-The-Air MACs (Wireshark / 802.11 frames) ----
 # KEEP THESE AS-IS until separately re-measured.
@@ -34,9 +34,9 @@ export MAC3_HW_MAC="10:9f:41:c0:b2:b1"
 export MAC4_HW_MAC="10:9f:41:c6:2a:38"
 
 # ---- Ports ----
-export BACKEND_A_PORT="3001"
-export BACKEND_B_PORT="3002"
-export HTTPS_PORT="443"
+export BACKEND_A_PORT="${BACKEND_A_PORT:-3001}"
+export BACKEND_B_PORT="${BACKEND_B_PORT:-3002}"
+export HTTPS_PORT="${HTTPS_PORT:-443}"
 
 # ---- Upstream Resolvers ----
 export UPSTREAM_DNS_1="10.5.7.1"         # campus resolver
@@ -47,14 +47,14 @@ export UPSTREAM_DNS_2=""                 # no public fallback
 export BACKUP_DNS_IP="${MAC3_IP}"
 export BACKUP_DNS_LABEL="Mac 3 (Abhijeet)"
 
-# Ext E - standby edge nginx (same config as Mac 2). Default: Mac 4 (Ankita).
-export STANDBY_EDGE_IP="${MAC4_IP}"
-export STANDBY_EDGE_LABEL="Mac 4 (Ankita)"
+# Ext E - standby edge nginx (same config as Mac 2). Mac 3 (Abhijeet): reachable over SSH.
+export STANDBY_EDGE_IP="${MAC3_IP}"
+export STANDBY_EDGE_LABEL="Mac 3 (Abhijeet)"
 
 # Ext B/E - where app.$DOMAIN points. scripts/dns-set-app.sh overrides this per run.
 # api.$DOMAIN always stays on the primary edge (Mac 2) as a control record.
 export APP_RECORD_IP="${APP_RECORD_IP:-$MAC2_IP}"
-export DNS_TTL="30"                       # seconds; visible in dig ANSWER section
+export DNS_TTL="${DNS_TTL:-30}"                 # seconds; visible in dig ANSWER section
 
 # Ext C - extra source IPs allowed to reach backend ports (space separated). Keep EMPTY
 # for the demo (only Mac 2 may reach 3001/3002).
@@ -63,3 +63,7 @@ export FIREWALL_EXTRA_ALLOW="${FIREWALL_EXTRA_ALLOW:-}"
 # Where brew's nginx finds the cert on EVERY edge machine (Apple Silicon default).
 # Intel Mac edge? use /usr/local/etc/nginx/certs
 export CERT_DIR="${CERT_DIR:-/opt/homebrew/etc/nginx/certs}"
+
+# ---- Knobs the examiner may ask you to change (edit, then scripts/render-configs.sh + restart) ----
+export LB_METHOD="${LB_METHOD:-round_robin}"   # round_robin | least_conn | ip_hash
+export EXTRA_RECORDS="${EXTRA_RECORDS:-}"      # e.g. "db=10.7.18.174 www=10.7.26.115"  -> db.$DOMAIN etc.

@@ -13,7 +13,7 @@ echo "== listening sockets on $HTTPS_PORT"
 sudo lsof -nP -iTCP:"$HTTPS_PORT" -sTCP:LISTEN | tail -n +2 || echo "NOTHING listening on $HTTPS_PORT"
 echo "== cert files"
 ls -l "$CERT_DIR"/edge.pem "$CERT_DIR"/edge-key.pem 2>&1
-openssl x509 -in "$CERT_DIR/edge.pem" -noout -subject -enddate -ext subjectAltName 2>/dev/null
+openssl x509 -in "$CERT_DIR/edge.pem" -noout -subject -enddate 2>/dev/null; openssl x509 -in "$CERT_DIR/edge.pem" -noout -text 2>/dev/null | grep -A1 "Subject Alternative" | tail -1
 echo "== upstreams in the RUNNING config"
 grep -E '^\s*server [0-9]' "$CONF"
 for u in $(grep -E '^\s*server [0-9]' "$CONF" | awk '{print $2}'); do
