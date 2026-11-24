@@ -2,7 +2,7 @@
 # Step 1: topology + IP/service inventory
 source "$(dirname "$0")/../scripts/lib.sh"
 say "Four Macs, one Wi-Fi subnet $SUBNET. Clients only know the name $APP; DNS sends them to the edge, the edge balances two backends."
-run "open '$ROOT/docs/topology.png'"
+run "open '$ROOT/docs/topology-phase2.png'"
 hdr "IP / service inventory (live from env.sh)"
 printf '%-6s %-10s %-15s %-48s %s\n' Mac Person IP Services "Cloud analogue"
 printf '%-6s %-10s %-15s %-48s %s\n' 1 Aryan "$MAC1_IP" "dnsmasq primary DNS udp/53, test client" "Route 53 private zone"

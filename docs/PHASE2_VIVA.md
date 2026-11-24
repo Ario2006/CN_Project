@@ -39,3 +39,13 @@
 26. *Refused vs timeout?* Refused means the host is alive and sent a RST, so nothing is listening. Timeout means no reply at all: host down, wrong IP, or a firewall dropping packets.
 27. *dig works but curl fails to resolve: why?* `/etc/hosts`, a different resolver for curl (scoped resolvers or VPN), or the cache. dig bypasses the OS resolver.
 28. *What does a 502 tell you?* DNS, TCP and TLS to the edge all succeeded. The edge couldn't get a valid response from any upstream.
+
+**Learned while building: likely follow-ups**
+29. *Your failover log shows 504, not "connection refused". Why?* Mac 3's macOS firewall drops SYNs to a closed port instead of sending an RST, so nginx's 1 s `proxy_connect_timeout` fires (504 in `upstream_status`). nginx still retries on B in the same request. Without that firewall you'd see an instant RST and `connect() failed (61: Connection refused)`.
+30. *Why was the client stale for 37 s with a 30 s TTL?* The cache entry was created at the client's last lookup, slightly before the change, and mDNSResponder expires and refreshes entries lazily. Expect roughly one TTL, not to the second.
+31. *What happens if a client also lists 8.8.8.8?* 8.8.8.8 doesn't know `.test` and answers NXDOMAIN. macOS can use that answer and cache it negatively, so our name stops resolving even though our servers are fine. We saw this happen.
+32. *An upstream port typo didn't produce any error for users. How would you catch it?* Failover hides it. Look at the X-Backend distribution (only B), the access log (`upstream_status=502, 200`) and `diagnose-edge.sh` (TCP to `:3011` refused). Monitoring must alert on upstream failures, not just on client errors.
+33. *Why does a DNS cutover need no new certificate?* The certificate's SAN lists `app.teamTeamCN.test`. TLS checks the name the client asked for, so any edge holding that cert and key is valid.
+34. *How is pf rollback guaranteed?* The rules live only in the anchor `com.apple/250.CNIsolation`. Rollback flushes that anchor and releases our `pfctl -E` reference token. The original `/etc/pf.conf` is never edited, and a copy is in `firewall/backup/`.
+35. *Why not keep the campus DNS as the upstream?* It was unreachable on test day, and that broke internet names only. Our zone is answered locally (`local=`), so it was never affected: a nice example of failure isolation.
+36. *What does `/edge-health` prove?* It's answered by nginx itself without touching any backend. If it returns 200 while `/api/status` returns 502, the edge is healthy and the fault is behind it.

@@ -1,4 +1,58 @@
-# Architecture - Phase 1 (Private Network Service Platform)
+# Architecture (Phase 2: Harden & Recover; extends Phase 1)
+
+![Phase 2 topology](topology-phase2.png)
+
+Live IPs: [ip-service-inventory.md](ip-service-inventory.md) (generated from `env.sh`, because DHCP changes IPs day to day).
+
+```mermaid
+flowchart LR
+  C["Client (Mac 1 / Mac 4)<br/>resolvers: Mac 1, Mac 3"]
+  D1["Mac 1 · PRIMARY DNS<br/>dnsmasq udp/53 · TTL 30 s"]
+  D2["Mac 3 · BACKUP DNS (Ext A)<br/>identical records"]
+  E1["Mac 2 · PRIMARY EDGE<br/>nginx tcp/443 · TLS · LB<br/>passive health checks · X-Edge: primary"]
+  E2["Mac 3 · STANDBY EDGE (Ext E)<br/>same config + cert · X-Edge: standby"]
+  A["Mac 3 · Backend A :3001<br/>pf: only Mac 2 (Ext C)"]
+  B["Mac 4 · Backend B :3002<br/>pf: only Mac 2 (Ext C)"]
+  C -- "1. DNS" --> D1
+  C -. "1'. primary down" .-> D2
+  C -- "2. HTTPS by name" --> E1
+  C -. "2'. after DNS cutover + TTL" .-> E2
+  E1 -- "3. HTTP (round-robin, retry on failure)" --> A
+  E1 --> B
+  E2 -.-> A
+  E2 -.-> B
+```
+
+## What each Phase 2 component adds
+
+| Extension | Component | Mechanism | Failure it handles | Cloud equivalent |
+|---|---|---|---|---|
+| A | backup dnsmasq on Mac 3 | client resolver list `Mac1 Mac3`; resolver moves on when the first is silent or unreachable | DNS server down | Route 53's multiple name servers / secondary DNS |
+| B | `local-ttl=30` on `host-record`s | caches may reuse an answer for 30 s | controls how fast record changes spread | Route 53 record TTL |
+| C | pf anchor `com.apple/250.CNIsolation` on Mac 3/4 | `pass` from Mac 2, `block drop` for the rest, `keep state` | bypassing the edge / exposing backends | security groups (backend SG allows only the ALB SG) |
+| D | nginx `max_fails=1 fail_timeout=10s`, `proxy_next_upstream`, `proxy_connect_timeout 1s` | passive health check + same-request retry | backend down | ALB target-group health checks |
+| E | standby nginx on Mac 3 + `dns-set-app.sh standby` | DNS cutover; same cert (bound to the name) | planned edge migration / edge loss | Route 53 failover routing, blue/green edge |
+| F | `diagnose.sh`, `diagnose-edge.sh` | bottom-up layer checks, degraded-pool detection | any injected fault | runbooks / observability |
+
+## Request paths
+- **Normal:** client → Mac 1 DNS (A = Mac 2) → TCP 443 + TLS to Mac 2 → round-robin HTTP to A:3001 / B:3002.
+- **Primary DNS down:** client → Mac 1 (no answer) → Mac 3 DNS (same answer) → normal path continues.
+- **Backend down:** Mac 2 tries A → connect fails within 1 s → the same request goes to B → client gets 200. A is skipped for 10 s.
+- **Edge cutover:** `app` → Mac 3. Clients with a cached answer keep using Mac 2 until their TTL expires, then do a fresh TCP + TLS handshake to Mac 3.
+
+## Remaining single points of failure
+The **active edge** (one nginx serves all traffic at a time), the **Wi-Fi LAN/AP**, and **Mac 2 as the only CA key holder**. Eliminating the edge SPOF would take two edges with a floating VIP (VRRP/keepalived, about 1 s, same L2 only), health-checked DNS failover (cross-network, TTL-bound), or a managed multi-AZ load balancer.
+
+## Phase 2 design decisions
+- Backup DNS and standby edge both run on **Mac 3**: the PDF names Mac 1/Mac 4 as clients, the backup resolver must not be Mac 1, and Mac 3 is administered over SSH.
+- `host-record` rather than `address=`: exact names, and AAAA queries get a clean no-data answer instead of NXDOMAIN.
+- Clients list **only team resolvers**. A public resolver answers NXDOMAIN for `.test`, and macOS caches it (we observed this).
+- Upstream for internet names: 8.8.8.8 with the campus resolver as fallback. Our zone is never forwarded (`local=/teamTeamCN.test/`).
+- `block drop` rather than `block return`: an unauthorised client gets a timeout and learns nothing about the service.
+
+---
+
+# Phase 1 architecture (as reviewed; IPs from the Phase 1 review day)
 
 ## Topology (one L2/L3 segment: campus Wi-Fi 10.7.0.0/19, mask 255.255.224.0, gateway 10.7.0.1)
 ```mermaid

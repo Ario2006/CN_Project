@@ -1,4 +1,4 @@
-# Private Network Service Platform (Phase 1)
+# Private Network Service Platform (Phase 1 + Phase 2)
 
 [![Network Status](https://img.shields.io/badge/Network-10.7.0.0%2F19-brightgreen?style=for-the-badge&logo=wifi)](docs/ip-service-inventory.md)
 [![Audit Status](https://img.shields.io/badge/Audit-100%25%20Verified%20(28%2F28)-blue?style=for-the-badge&logo=checkmarx)](docs/evidence-matrix.md)
@@ -12,7 +12,9 @@ This project explores computer networking from the physical and data link layers
 
 > *"The network is the project — the services exist to illuminate the protocols."*
 
-> **Phase 2 (Harden & Recover):** backup DNS, TTL cutover, pf service isolation, nginx HA failover, standby-edge DNS migration and layer-by-layer troubleshooting. See [docs/PHASE2_RUNBOOK.md](docs/PHASE2_RUNBOOK.md), [docs/PHASE2_REPORT.md](docs/PHASE2_REPORT.md) and [docs/PHASE2_VIVA.md](docs/PHASE2_VIVA.md).
+> **Phase 2 (Harden & Recover), complete:** backup DNS, TTL cutover, pf service isolation, nginx HA failover, standby-edge DNS migration, layer-by-layer troubleshooting.
+> Start here: **[docs/EVAL_PLAN.md](docs/EVAL_PLAN.md)** (evaluation-day sequence) · [docs/PHASE2_RUNBOOK.md](docs/PHASE2_RUNBOOK.md) · [docs/PHASE2_REPORT.md](docs/PHASE2_REPORT.md) · [docs/COOKBOOK.md](docs/COOKBOOK.md) (live change recipes) · [docs/PHASE2_VIVA.md](docs/PHASE2_VIVA.md) · [docs/ANKITA_MAC4.md](docs/ANKITA_MAC4.md) · [docs/architecture.md](docs/architecture.md) · [docs/ip-service-inventory.md](docs/ip-service-inventory.md)
+> One command health check: `scripts/preflight.sh` · Demo scripts: `demo/00-preflight.sh` … `demo/10-diagnose.sh`
 
 ---
 

@@ -35,3 +35,28 @@ Every file lives under `evidence/<folder>/`. Take each one for real; never mock.
 | 28 | [x] Present | Saved pcaps | files | open in Wireshark | 07_WIRESHARK/*.pcap | | all |
 | 29-33 | [x] Present | 5 failure demos | runbook Phase 9 | | 08_FAILURES/08_FAILURE_wrong_dns.png, _wrong_ip.png, _backend_down.png, _both_backends_down.png, _wrong_port.png | symptom/layer/why | client |
 
+
+# Evidence matrix (Phase 2)
+Text evidence is produced by `scripts/evidence.sh` (header: date, host, IP, exact command). Re-create any row live with the demo script listed.
+
+| # | Ext | Requirement | Re-create live | File(s) | Status |
+|---|---|---|---|---|---|
+| 34 | A | Backup resolver with the same records | `demo/09a-backup-dns.sh` | evidence/09_BACKUP_DNS/09_DNS_failover_demo.txt (records diff, both UP) | [x] |
+| 35 | A | Clients list both resolvers | `scripts/set-client-dns.sh both` | same file (networksetup / resolv.conf) | [x] |
+| 36 | A | Primary stopped, resolved through the backup | `demo/09a-backup-dns.sh` | same file (`SERVER: <Mac3>#53`, curl 200) | [x] |
+| 37 | A | DNS failure vs app failure | `scripts/fault.sh inject 3` vs `inject 8` | evidence/14_TROUBLESHOOT/14_TS_fault3.txt + report §4 | [x] |
+| 38 | B | TTL 30 s visible | `dig app.teamTeamCN.test` | evidence/10_TTL/10_TTL_demo.txt | [x] |
+| 39 | B | Old cached answer until TTL expiry | `demo/09b-ttl.sh` | same file (STALE lines, then in sync) | [x] |
+| 40 | B | Manual flush, immediate change | `demo/09b-ttl.sh` | same file (last block) | [x] |
+| 41 | C | pf rules: only Mac 2 reaches 3001/3002 | `demo/09c-isolation.sh` | firewall/backend-A.pf, backend-B.pf; evidence/11_ISOLATION/ | [x] A / [ ] B (needs Ankita) |
+| 42 | C | Client blocked, edge allowed, service up | `demo/09c-isolation.sh` | evidence/11_ISOLATION/11_ISO_demo.txt | [ ] run with Ankita |
+| 43 | C | Rollback copy + restore | `scripts/firewall.sh rollback` | firewall/backup/*/ (pf.conf.original, rules/status before) | [x] |
+| 44 | D | nginx detects failure, routes to the healthy backend | `demo/08-backend-fail.sh` | evidence/12_HA_FAILOVER/12_HA_failover_demo.txt (`upstream_status=504, 200`) | [x] |
+| 45 | D | Backend back, balancing resumes | same | same file (A reappears) | [x] |
+| 46 | D | SPOF identified | | docs/architecture.md, "Remaining single points of failure" | [x] |
+| 47 | E | Standby nginx with the same config | `demo/09e-edge-cutover.sh` | nginx/nginx-standby.conf; evidence/13_EDGE_CUTOVER/13_EDGE_cutover_demo.txt (diff) | [x] |
+| 48 | E | DNS record → standby; TTL effect (old edge, then new) | same | same file (28× primary, then 15× standby, 0 failures) | [x] |
+| 49 | F | Systematic diagnosis of injected faults | `scripts/fault.sh inject N` + `scripts/diagnose.sh` | evidence/14_TROUBLESHOOT/14_TS_fault{1,2,3,4,5,7,10}.txt | [x] |
+| 50 | all | Updated architecture + config bundle | | docs/architecture.md, docs/topology-phase2.png, nginx/phase1/, dns/phase1/ | [x] |
+| 51 | all | Phase 2 report | | docs/PHASE2_REPORT.md | [x] |
+| 52 | opt | Phase 2 pcaps (DNS failover, HA retry, cutover) | docs/PHASE2_RUNBOOK.md, "Packet captures" | evidence/09_…pcap, 12_…pcap, 13_…pcap | [ ] |
