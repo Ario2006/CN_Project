@@ -1,0 +1,50 @@
+# 2026-11-24 23:48:44 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ /private/tmp/claude-501/-Users-aryankumar-Desktop-All-Projects-CN/de561979-ecb0-4e86-8855-11f5d22fd30e/scratchpad/extc.sh
+
+
+>> Ext C - pf isolation. Mac 4 (Ankita) already applied: 'Isolation ACTIVE on Backend B'. Applying on Mac 3:
+[mac3]$ scripts/firewall.sh apply
+Rollback copy saved in firewall/backup/Abhijeets-MacBook-Pro-3-20261124-234845
+pf enabled
+Token : 1170876475936186596
+[23:48:46] Isolation ACTIVE on Backend A (10.7.18.174): only 10.7.26.115  may reach port 3001
+Status: Enabled for 0 days 00:00:00           Debug: Urgent
+--- rules in anchor com.apple/250.CNIsolation:
+pass in quick on lo0 all flags S/SA keep state
+pass in quick inet proto tcp from 10.7.26.115 to any port = 3001 flags S/SA keep state
+block drop in quick proto tcp from any to any port = 3001
+--- live states touching 3001/3002:
+
+>> Client (Mac 1) -> backends directly: must TIME OUT (dropped)
+$ nc -vz -G 3 10.7.18.174 3001; nc -vz -G 3 10.7.17.93 3002
+nc: connectx to 10.7.18.174 port 3001 (tcp) failed: Operation timed out
+nc: connectx to 10.7.17.93 port 3002 (tcp) failed: Operation timed out
+$ curl -s -m 4 -o /dev/null -w 'curl direct to B -> HTTP %{http_code}\n' http://10.7.17.93:3002/api/status
+curl direct to B -> HTTP 000
+
+>> Edge (Mac 2) -> backends: ALLOWED
+[mac2]$ nc -vz -G 3 10.7.18.174 3001; nc -vz -G 3 10.7.17.93 3002; curl -s http://10.7.17.93:3002/api/status
+Connection to 10.7.18.174 port 3001 [tcp/redwood-broker] succeeded!
+Connection to 10.7.17.93 port 3002 [tcp/exlm-agent] succeeded!
+{"backend": "B", "status": "ok"}
+
+>> Service through the edge, by name: unaffected
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/watch-requests.sh' 4 1
+Watching https://app.teamTeamCN.test/api/status   (primary edge 10.7.26.115, standby 10.7.18.174)
+TIME     HTTP BACKEND X-EDGE   CONNECTED-TO
+23:48:57 200  A       primary  10.7.26.115 (Mac2-primary) 
+23:48:58 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:48:59 200  A       primary  10.7.26.115 (Mac2-primary) 
+23:49:00 200  B       primary  10.7.26.115 (Mac2-primary) 
+
+>> Rules + live states on Mac 3 (keep state lets Mac 2's replies through)
+[mac3]$ scripts/firewall.sh status
+Status: Enabled for 0 days 00:00:16           Debug: Urgent
+--- rules in anchor com.apple/250.CNIsolation:
+pass in quick on lo0 all flags S/SA keep state
+pass in quick inet proto tcp from 10.7.26.115 to any port = 3001 flags S/SA keep state
+block drop in quick proto tcp from any to any port = 3001
+--- live states touching 3001/3002:
+ALL tcp 10.7.18.174:3001 <- 10.7.26.115:61907       FIN_WAIT_2:FIN_WAIT_2
+ALL tcp 10.7.18.174:3001 <- 10.7.26.115:61910       FIN_WAIT_2:FIN_WAIT_2
+ALL tcp 10.7.18.174:3001 <- 10.7.26.115:61912       FIN_WAIT_2:FIN_WAIT_2

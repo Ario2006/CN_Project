@@ -1,0 +1,15 @@
+# 2026-11-24 23:49:08 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ ssh -o BatchMode=yes mac3 cd ~/CN_Project && scripts/firewall.sh rollback
+
+rules cleared
+nat cleared
+dummynet cleared
+0 tables deleted.
+pf disabled
+[23:49:08] Isolation REMOVED (anchor flushed, our pf enable reference released). /etc/pf.conf was never modified.
+Status: Disabled for 0 days 00:00:00          Debug: Urgent
+--- rules in anchor com.apple/250.CNIsolation:
+--- live states touching 3001/3002:
+ALL tcp 10.7.18.174:3001 <- 10.7.26.115:61907       FIN_WAIT_2:FIN_WAIT_2
+ALL tcp 10.7.18.174:3001 <- 10.7.26.115:61910       FIN_WAIT_2:FIN_WAIT_2
+ALL tcp 10.7.18.174:3001 <- 10.7.26.115:61912       FIN_WAIT_2:FIN_WAIT_2

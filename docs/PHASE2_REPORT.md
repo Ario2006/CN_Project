@@ -35,10 +35,10 @@ Phase 1 configs are preserved in `nginx/phase1/` and `dns/phase1/`.
 | B1 | TTL visible | `30 IN A` | `app.teamTeamCN.test. 30 IN A 10.7.26.115` | PASS | 10_TTL_demo.txt |
 | B2 | Record moved to Mac 3 (23:28:10) | client stale up to about 30 s | STALE 23:28:10 to 23:28:45, in sync 23:28:47 (about 37 s) | PASS | 10_TTL_demo.txt |
 | B3 | Change back + flush | immediate | in sync on the first poll after the flush | PASS | 10_TTL_demo.txt |
-| C1 | Mac 1 → Mac 3:3001 with pf on | timeout | `Operation timed out` | PASS | runbook, Ext C |
-| C2 | Mac 2 → Mac 3:3001 with pf on | connects | `succeeded` | PASS | runbook, Ext C |
-| C3 | Service through the edge with pf on | 200, A/B | 200 A/B/A/B | PASS | runbook, Ext C |
-| C4 | Rollback | direct access back | `succeeded`; rollback copy in `firewall/backup/` | PASS | firewall/backup/ |
+| C1 | Mac 1 → Mac 3:3001 and Mac 4:3002 with pf on (23:48) | timeout | both `Operation timed out`; direct curl to B = 000 | PASS | 11_ISO_active.txt |
+| C2 | Mac 2 → both backends with pf on | connects | both `succeeded`, B returned JSON; pf states show only Mac 2 | PASS | 11_ISO_active.txt |
+| C3 | Service through the edge with pf on | 200, A/B | 200 A/B/A/B | PASS | 11_ISO_active.txt |
+| C4 | Rollback on both backends | direct access back | `succeeded` again; rollback copies in `firewall/backup/` | PASS | 11_ISO_rollback_*.txt, firewall/backup/ |
 | D1 | Backend A stopped (23:24:38) | 100% B, 0 errors | 8/8 200 from B; log `upstream_status=504, 200`, "temporarily disabled" | PASS | 12_HA_failover_demo.txt |
 | D2 | A restarted (23:24:51) | A/B resumes after ≤ 10 s | A served again at 23:25:10 | PASS | 12_HA_failover_demo.txt |
 | E1 | `app` cut over to standby (23:30:38) | cached client stays on primary ≤ TTL | `X-Edge: primary` until 23:31:09, `standby` from 23:31:10 | PASS | 13_EDGE_cutover_demo.txt |

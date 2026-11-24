@@ -48,8 +48,8 @@ Text evidence is produced by `scripts/evidence.sh` (header: date, host, IP, exac
 | 38 | B | TTL 30 s visible | `dig app.teamTeamCN.test` | evidence/10_TTL/10_TTL_demo.txt | [x] |
 | 39 | B | Old cached answer until TTL expiry | `demo/09b-ttl.sh` | same file (STALE lines, then in sync) | [x] |
 | 40 | B | Manual flush, immediate change | `demo/09b-ttl.sh` | same file (last block) | [x] |
-| 41 | C | pf rules: only Mac 2 reaches 3001/3002 | `demo/09c-isolation.sh` | firewall/backend-A.pf, backend-B.pf; evidence/11_ISOLATION/ | [x] A / [ ] B (needs Ankita) |
-| 42 | C | Client blocked, edge allowed, service up | `demo/09c-isolation.sh` | evidence/11_ISOLATION/11_ISO_demo.txt | [ ] run with Ankita |
+| 41 | C | pf rules: only Mac 2 reaches 3001/3002 | `demo/09c-isolation.sh` | firewall/backend-A.pf, backend-B.pf; evidence/11_ISOLATION/ | [x] |
+| 42 | C | Client blocked, edge allowed, service up | `demo/09c-isolation.sh` | evidence/11_ISOLATION/11_ISO_active.txt (+ 11_ISO_rollback_*.txt) | [x] |
 | 43 | C | Rollback copy + restore | `scripts/firewall.sh rollback` | firewall/backup/*/ (pf.conf.original, rules/status before) | [x] |
 | 44 | D | nginx detects failure, routes to the healthy backend | `demo/08-backend-fail.sh` | evidence/12_HA_FAILOVER/12_HA_failover_demo.txt (`upstream_status=504, 200`) | [x] |
 | 45 | D | Backend back, balancing resumes | same | same file (A reappears) | [x] |

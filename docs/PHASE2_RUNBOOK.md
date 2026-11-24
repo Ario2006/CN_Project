@@ -44,7 +44,7 @@ Over SSH, our scripts run with a scoped passwordless sudo rule (`scripts/sudo-se
 
 ### Ext C: Service isolation (`demo/09c-isolation.sh`)
 - pf rules live in the anchor `com.apple/250.CNIsolation` (`/etc/pf.conf` is untouched), from `firewall/backend-{A,B}.pf`: pass from Mac 2, `block drop` for everyone else.
-- Mac 3 result: my Mac timed out on `nc` to 3001, Mac 2 succeeded, the service through the edge stayed 200, and rollback restored direct access.
+- Result (23:48, both backends): Mac 1 timed out on 3001 and 3002, Mac 2 connected to both, the service through the edge stayed 200 A/B, and pf states showed only Mac 2. Rollback restored direct access. Evidence: `evidence/11_ISOLATION/`.
 - Rollback copy: `firewall/backup/<host>-<time>/` (pf.conf.original, rules and status from before).
 - Mac 4 needs Ankita: `scripts/firewall.sh apply` / `rollback`.
 
