@@ -14,6 +14,7 @@ case "$P" in
   *) F="$P";;
 esac
 case "$OUT" in /*) ;; *) OUT="$ROOT/$OUT";; esac; mkdir -p "$(dirname "$OUT")"
+sudo -v || exit 1   # ask for the password NOW (tcpdump then runs in the background)
 say "capturing '$F' on $IFACE for ${SEC}s -> ${OUT#$ROOT/}   (do the action NOW in another tab)"
 printf '%s$ sudo tcpdump -i %s -n -w %s %s%s\n' "$Y" "$IFACE" "${OUT#$ROOT/}" "$F" "$N"
 sudo tcpdump -i "$IFACE" -n -w "$OUT" $F &

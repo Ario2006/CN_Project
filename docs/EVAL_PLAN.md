@@ -4,27 +4,29 @@ Everything below was rehearsed live on 24 Nov 2026 (evidence in `evidence/09_*` 
 Every demo script **prints the real command before running it**, so the examiner sees `dig`, `curl`, `nc`, `pfctl` and `nginx` being used, not magic.
 
 ## A. Arrive early: 15-minute bring-up
+**Mode: everyone runs their OWN Mac's commands and types their own sudo password.** The passwordless sudo rule was removed. When Aryan runs a `demo/` script and it prints `>>> ON mac2 RUN: …`, that person types the command and Aryan presses Enter.
 
-| # | Who / where | Command | Pass when |
+| # | Who | Command | Pass when |
 |---|---|---|---|
-| 1 | Everyone | Same Wi-Fi, chargers in, `caffeinate -dis &` | |
-| 2 | Each person | `ipconfig getifaddr en0`, then tell Aryan | |
-| 3 | Aryan (Mac 1) | `scripts/set-ip.sh auto <Ankita-IP>` | the 4 IPs are printed |
-| 4 | Aryan | `scripts/sync.sh "eval-day IPs"` | Mac 2/3 pulled. **Ankita: `git pull`** |
-| 5 | Aryan | `scripts/reset-baseline.sh all` (Ankita runs `scripts/reset-baseline.sh` when prompted) | each Mac says `at baseline` |
-| 6 | Aryan | `ssh mac3 'cd ~/CN_Project && scripts/edge-ctl.sh standby start && scripts/edge-ctl.sh standby stop'` | warms Mac 3's firewall for nginx (avoids the first-connection timeout) |
-| 7 | Aryan | `scripts/preflight.sh` | **ALL GREEN** |
+| 1 | Everyone | same Wi-Fi, chargers in, `cd CN_Project`, `git pull`, `caffeinate -dis &` | |
+| 2 | Everyone | `ipconfig getifaddr en0`, then tell Aryan | |
+| 3 | Aryan | `scripts/set-ip.sh auto <Ankita-IP>` then `scripts/sync.sh "eval-day IPs"` | the 4 IPs are printed and pushed |
+| 4 | Ranajeet, Abhijeet, Ankita | `git pull` | |
+| 5 | Aryan | `ssh mac3 'mkdir -p /opt/homebrew/etc/nginx/certs' && scp -3 mac2:/opt/homebrew/etc/nginx/certs/edge.pem mac2:/opt/homebrew/etc/nginx/certs/edge-key.pem mac3:/opt/homebrew/etc/nginx/certs/` | standby cert restored on Mac 3 |
+| 6 | Each person, own Mac | `scripts/reset-baseline.sh` | `macN at baseline` |
+| 7 | Abhijeet | `scripts/edge-ctl.sh standby start` then `scripts/edge-ctl.sh standby stop` | warms Mac 3's firewall for nginx |
+| 8 | Aryan (and Ankita) | `scripts/preflight.sh` | **ALL GREEN** |
 
-If IPs changed after step 5: run `scripts/set-ip.sh`, then `scripts/sync.sh`, then restart DNS (`scripts/dns-ctl.sh primary restart`, and `ssh mac3 '...dns-ctl.sh backup restart'`), then `ssh mac2 '... edge-ctl.sh primary reload'`.
+If an IP changes later: step 3, step 4, then Aryan `scripts/dns-ctl.sh primary restart`, Abhijeet `scripts/dns-ctl.sh backup restart`, Ranajeet `scripts/edge-ctl.sh primary reload`.
 
 ## B. Terminal layout on Mac 1
 - **Tab 1, demo:** `cd CN_Project`, then run `demo/NN-*.sh` in order.
-- **Tab 2, Mac 2 live log:** `ssh mac2`, `cd CN_Project`, `scripts/edge-ctl.sh primary log`.
+- **Mac 2 screen (Ranajeet):** `scripts/edge-ctl.sh primary log` (live access log).
 - **Tab 3, Mac 1 DNS log:** `scripts/dns-ctl.sh primary log`.
-- **Tab 4, Mac 3:** `ssh mac3`, `cd CN_Project`, `scripts/dns-ctl.sh backup log`.
+- **Mac 3 screen (Abhijeet):** `scripts/dns-ctl.sh backup log`.
 - **Also open:** `docs/topology-phase2.png`, `docs/ip-service-inventory.md`, Wireshark with `evidence/07_WIRESHARK/client_full_tls12.pcap`.
 
-> If the examiner wants each person to run their own Mac, set `DEMO_REMOTE=0`. The demo then prints "ON macN RUN: …" and waits, and the owner types it.
+> Default: the demo prints "ON macN RUN: …" and waits, and the owner types it. (`DEMO_REMOTE=1` would run it over SSH, but only if passwordless sudo is reinstalled with `scripts/sudo-setup.sh install`.)
 
 ## C. The 11 steps of PDF section 8: script, speaker, key sentence
 
@@ -67,7 +69,7 @@ Practice with `scripts/fault.sh list`, `scripts/fault.sh inject N` and `scripts/
 - **nginx keeps a failed backend disabled for 10 s** (`fail_timeout`). Right after you restore a backend, the first few requests may all go to the other one. Wait 10 s.
 - **The client stays stale for about TTL + a few seconds** (we measured 30–37 s), because the cache timer started at the client's last lookup.
 - **Campus resolver 10.5.7.1 may be down**, so upstream is 8.8.8.8 with campus as fallback (this only matters for internet names; our zone is local).
-- The sudo rule for the project's tools stays until after the evaluation. Then run `bash scripts/sudo-setup.sh remove` on Macs 1–3.
+- Passwordless sudo is removed, so every script asks the owner for their password the first time. That's expected.
 
 ## F. Deliverables checklist (PDF section 9)
 - [x] Architecture document updated for Phase 2: `docs/architecture.md`, `docs/topology-phase2.png`

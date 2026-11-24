@@ -41,13 +41,13 @@ need_role() {  # warn loudly if a script runs on the wrong Mac
 
 # on <mac1|mac2|mac3|mac4> "<command>"  - run a project command on another Mac.
 #   This Mac             -> runs locally
-#   mac2/mac3 with SSH   -> runs over SSH in ~/CN_Project (prints [mac2]$ cmd)
-#   mac4, or DEMO_REMOTE=0 (each owner types on their own Mac) -> prints the command and WAITS for Enter
+#   DEMO_REMOTE=1 + SSH + passwordless sudo -> runs on mac2/mac3 over SSH (prints [mac2]$ cmd)
+#   DEFAULT (DEMO_REMOTE=0): prints "ON macN RUN: <cmd>" and WAITS for Enter - the owner types it on their Mac
 REMOTE_DIR="${REMOTE_DIR:-~/CN_Project}"
 on() {
   local h="$1"; shift; local cmd="$*"
   if [ "$h" = "$(role)" ]; then run "$cmd"; return; fi
-  if [ "${DEMO_REMOTE:-1}" = 1 ] && [ "$h" != mac4 ] && ssh -o BatchMode=yes -o ConnectTimeout=3 "$h" true 2>/dev/null; then
+  if [ "${DEMO_REMOTE:-0}" = 1 ] && [ "$h" != mac4 ] && ssh -o BatchMode=yes -o ConnectTimeout=3 "$h" true 2>/dev/null; then
     printf '%s[%s]$ %s%s\n' "$Y" "$h" "$cmd" "$N"
     ssh -o BatchMode=yes "$h" "cd $REMOTE_DIR && $cmd"
   else

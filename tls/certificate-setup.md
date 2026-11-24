@@ -28,3 +28,15 @@
 
 Rollback: `sudo security remove-trusted-cert -d tls/rootCA.pem` (per client); on Mac 2 also `mkcert -uninstall`.
 Why a CA instead of a bare self-signed leaf: clients trust ONE root, which can sign many certs (app, api, standby edge in Phase 2).
+
+---
+
+## Phase 2 changes (24 Nov 2026)
+1. **Leaf reissued for the real team domain.** The installed leaf still named `app.teamX.test`. On Mac 2, with the **same mkcert CA** (so client trust is unchanged):
+   `cd /opt/homebrew/etc/nginx/certs && mkdir -p old && cp edge.pem edge-key.pem old/ && mkcert -cert-file edge.pem -key-file edge-key.pem app.teamTeamCN.test api.teamTeamCN.test`
+   Verify: `/usr/bin/curl -v https://app.teamTeamCN.test/api/status 2>&1 | grep -E 'subjectAltName|verify ok'` gives `host "app.teamTeamCN.test" matched`, `SSL certificate verify ok`.
+2. **Standby edge (Mac 3, Ext E) uses the same leaf and key**, copied from Mac 2 (run on Mac 1; it uses SSH keys, no password):
+   `ssh mac3 'mkdir -p /opt/homebrew/etc/nginx/certs' && scp -3 mac2:/opt/homebrew/etc/nginx/certs/edge.pem mac2:/opt/homebrew/etc/nginx/certs/edge-key.pem mac3:/opt/homebrew/etc/nginx/certs/`
+   No new certificate is needed for the DNS cutover: the SAN binds the **name**, not the IP.
+   The key was deleted from Mac 3 after rehearsal. Copy it again before the Ext E demo, and delete it afterwards: `ssh mac3 'rm /opt/homebrew/etc/nginx/certs/edge-key.pem'`.
+3. The CA's label still reads `…@app.teamX.test`. That's only the name mkcert gave the CA at creation; trust comes from its key in the System keychain.
