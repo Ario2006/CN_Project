@@ -25,7 +25,7 @@ export MAC4_IP="10.7.17.93"             # Ankita    - Backend B :3002 + test cli
 export MAC1_AIR_MAC="d2:de:13:78:fa:39"
 export MAC2_AIR_MAC="26:6d:dc:6e:22:ed"
 export MAC3_AIR_MAC="8e:c9:23:39:6e:c1"
-export MAC4_AIR_MAC="da:8e:64:df:05:3f"
+export MAC4_AIR_MAC="86:a5:20:24:d8:84"
 
 # ---- Real Hardware MACs (networksetup permanent MACs) ----
 export MAC1_HW_MAC="10:9f:41:be:57:6d"
