@@ -1,0 +1,57 @@
+# 2026-11-24 23:24:32 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ demo/08-backend-fail.sh
+
+
+>> Both backends up: A and B alternate.
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/watch-requests.sh' 4 1
+Watching https://app.teamTeamCN.test/api/status   (primary edge 10.7.26.115, standby 10.7.18.174)
+TIME     HTTP BACKEND X-EDGE   CONNECTED-TO
+23:24:33 200  A       primary  10.7.26.115 (Mac2-primary) 
+23:24:34 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:35 200  A       primary  10.7.26.115 (Mac2-primary) 
+23:24:36 200  B       primary  10.7.26.115 (Mac2-primary) 
+
+>> Stopping Backend A on Mac 3.
+[mac3]$ scripts/backend-ctl.sh A stop
+[23:24:38] stopped Backend A (pid 10865)
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/watch-requests.sh' 8 1
+Watching https://app.teamTeamCN.test/api/status   (primary edge 10.7.26.115, standby 10.7.18.174)
+TIME     HTTP BACKEND X-EDGE   CONNECTED-TO
+23:24:39 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:41 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:42 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:43 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:44 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:45 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:47 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:48 200  B       primary  10.7.26.115 (Mac2-primary) 
+
+>> Every request 200 from B. nginx got 'connection refused' from A, retried the SAME request on B (proxy_next_upstream) and marked A down for fail_timeout=10s.
+[mac2]$ grep -E ', ' /tmp/nginx-cn-access.log | tail -n 2; grep -E 'refused|temporarily disabled' /tmp/nginx-cn-error.log | tail -n 2
+10.7.20.4:60486 [24/Nov/2026:23:24:39 +0530] edge=primary "GET /api/status HTTP/1.1" 200 upstream=10.7.18.174:3001, 10.7.17.93:3002 upstream_status=504, 200 X-Backend=B rt=1.001, 0.051
+2026/11/24 23:24:39 [warn] 11480#0: *34 upstream server temporarily disabled while connecting to upstream, client: 10.7.20.4, server: app.teamteamcn.test, request: "GET /api/status HTTP/1.1", upstream: "http://10.7.18.174:3001/api/status", host: "app.teamTeamCN.test"
+
+>> Restarting Backend A.
+[mac3]$ scripts/backend-ctl.sh A start
+[23:24:51] started Backend A
+  FAIL  Backend A NOT listening on 3001
+$ curl -s -m 2 -i http://127.0.0.1:3001/api/status | grep -iE '^HTTP|^x-backend|backend'
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/watch-requests.sh' 14 1
+Watching https://app.teamTeamCN.test/api/status   (primary edge 10.7.26.115, standby 10.7.18.174)
+TIME     HTTP BACKEND X-EDGE   CONNECTED-TO
+23:24:54 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:55 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:57 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:58 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:24:59 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:01 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:02 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:03 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:04 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:05 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:06 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:08 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:09 200  B       primary  10.7.26.115 (Mac2-primary) 
+23:25:10 200  A       primary  10.7.26.115 (Mac2-primary) 
+
+>> After at most 10 s nginx tries A again with real traffic -> A, B alternate again. Remaining single point of failure: the edge (Mac 2) itself.

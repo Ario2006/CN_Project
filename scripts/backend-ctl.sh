@@ -16,7 +16,7 @@ case "$ACTION" in
     [ "$(myip)" = "$IP" ] || warn "this Mac is $(myip); env.sh expects Backend $ID on $IP"
     cd "$ROOT/backend" || exit 1
     BACKEND_ID="$ID" PORT="$PORT" nohup python3 server.py >> "$LOG" 2>&1 </dev/null &
-    echo $! > "$PIDF"; sleep 1; echo "[$(date +%T)] started Backend $ID"; status ;;
+    echo $! > "$PIDF"; for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do [ -n "$(pid_on_port)" ] && break; sleep 0.5; done; echo "[$(date +%T)] started Backend $ID"; status ;;
   stop)
     P="$(pid_on_port)"; [ -n "$P" ] && kill "$P" && echo "[$(date +%T)] stopped Backend $ID (pid $P)" || echo "was not running"; rm -f "$PIDF" ;;
   restart) "$0" "$ID" stop; sleep 1; "$0" "$ID" start ;;
