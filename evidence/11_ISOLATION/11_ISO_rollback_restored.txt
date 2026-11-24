@@ -1,0 +1,10 @@
+# 2026-11-24 23:52:05 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ bash -c source scripts/lib.sh; say "After rollback on BOTH backends: direct access restored"; run "nc -vz -G 3 $MAC3_IP $BACKEND_A_PORT; nc -vz -G 3 $MAC4_IP $BACKEND_B_PORT"; run "curl -s -m 4 http://$MAC4_IP:$BACKEND_B_PORT/api/status"
+
+
+>> After rollback on BOTH backends: direct access restored
+$ nc -vz -G 3 10.7.18.174 3001; nc -vz -G 3 10.7.17.93 3002
+Connection to 10.7.18.174 port 3001 [tcp/redwood-broker] succeeded!
+Connection to 10.7.17.93 port 3002 [tcp/exlm-agent] succeeded!
+$ curl -s -m 4 http://10.7.17.93:3002/api/status
+{"backend": "B", "status": "ok"}
