@@ -12,6 +12,7 @@ hdr "DNS"
 grep -qi "$DOMAIN" /etc/hosts && fail "/etc/hosts overrides $DOMAIN: $(grep -i "$DOMAIN" /etc/hosts)"
 R="$(networksetup -getdnsservers "$WIFI_SERVICE" | tr '\n' ' ')"
 case " $R" in *" $MAC1_IP "*) ok "client resolvers: $R";; *) fail "client resolvers: $R (team DNS missing -> scripts/set-client-dns.sh both)";; esac
+for r in $R; do case "$r" in "$MAC1_IP"|"$BACKUP_DNS_IP") ;; *) fail "non-team resolver $r in the list: it answers NXDOMAIN for $DOMAIN and poisons the cache -> scripts/set-client-dns.sh both";; esac; done
 P="$(dig +short +time=2 +tries=1 @"$MAC1_IP" "$APP" 2>/dev/null | head -1)"
 [ "$P" = "$MAC2_IP" ] && ok "primary $MAC1_IP: $APP -> $P (edge Mac 2)" || fail "primary $MAC1_IP: $APP -> '${P}' (expected $MAC2_IP)"
 S="$(dig +short +time=2 +tries=1 @"$BACKUP_DNS_IP" "$APP" 2>/dev/null | head -1)"

@@ -25,9 +25,9 @@ case "$ACTION" in
     sudo pfctl -sr 2>/dev/null > "$BK/pf-main-rules-before.txt"
     sudo pfctl -a "$ANCHOR" -sr 2>/dev/null > "$BK/pf-anchor-before.txt"
     echo "Rollback copy saved in ${BK#$ROOT/}"
-    sudo pfctl -nf "$RULES" -a "$ANCHOR" || { echo "rule syntax error"; exit 1; }
-    sudo pfctl -a "$ANCHOR" -f "$RULES" 2>&1 | grep -v ALTQ
-    OUT="$(sudo pfctl -E 2>&1)"; echo "$OUT" | grep -v ALTQ
+    sudo pfctl -nf "$RULES" -a "$ANCHOR" 2>/dev/null || { echo "rule syntax error"; exit 1; }
+    sudo pfctl -a "$ANCHOR" -f "$RULES" 2>&1 | grep -vE 'ALTQ|Use of -f|present in the main|See /etc/pf.conf|^$'
+    OUT="$(sudo pfctl -E 2>&1)"; echo "$OUT" | grep -vE 'ALTQ|Use of -f|present in the main|See /etc/pf.conf|^$'
     echo "$OUT" | awk '/Token/{print $3}' > "$TOKEN_FILE"
     echo "[$(date '+%T')] Isolation ACTIVE on Backend $ID ($MYIP): only $MAC2_IP ${FIREWALL_EXTRA_ALLOW} may reach port $( [ "$ID" = A ] && echo "$BACKEND_A_PORT" || echo "$BACKEND_B_PORT")"
     "$0" status ;;
@@ -36,8 +36,8 @@ case "$ACTION" in
     echo "--- rules in anchor $ANCHOR:"; sudo pfctl -a "$ANCHOR" -sr 2>/dev/null || true
     echo "--- live states touching 3001/3002:"; sudo pfctl -ss 2>/dev/null | grep -E ":(${BACKEND_A_PORT}|${BACKEND_B_PORT})\b" | head -5 ;;
   rollback)
-    sudo pfctl -a "$ANCHOR" -F all 2>&1 | grep -v ALTQ
-    if [ -s "$TOKEN_FILE" ]; then sudo pfctl -X "$(cat "$TOKEN_FILE")" 2>&1 | grep -v ALTQ; rm -f "$TOKEN_FILE"; fi
+    sudo pfctl -a "$ANCHOR" -F all 2>&1 | grep -vE 'ALTQ|Use of -f|present in the main|See /etc/pf.conf|^$'
+    if [ -s "$TOKEN_FILE" ]; then sudo pfctl -X "$(cat "$TOKEN_FILE")" 2>&1 | grep -vE 'ALTQ|Use of -f|present in the main|See /etc/pf.conf|^$'; rm -f "$TOKEN_FILE"; fi
     echo "[$(date '+%T')] Isolation REMOVED (anchor flushed, our pf enable reference released). /etc/pf.conf was never modified."
     "$0" status ;;
   *) echo "usage: firewall.sh apply|status|rollback [A|B]"; exit 1 ;;
