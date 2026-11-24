@@ -15,15 +15,15 @@ export GATEWAY="10.7.0.1"
 export BROADCAST="10.7.31.255"
 
 # ---- Real IP Addresses ----
-export MAC1_IP="10.7.30.82"             # Aryan     - DNS (dnsmasq) + test client
-export MAC2_IP="10.7.7.179"             # Ranajeet  - nginx edge / LB / TLS
-export MAC3_IP="10.7.19.31"             # Abhijeet  - Backend A :3001
-export MAC4_IP="10.7.17.143"            # Ankita    - Backend B :3002 + capture client
+export MAC1_IP="10.7.20.4"              # Aryan     - DNS (dnsmasq) + test client
+export MAC2_IP="10.7.26.115"            # Ranajeet  - nginx edge / LB / TLS
+export MAC3_IP="10.7.18.174"            # Abhijeet  - Backend A :3001 + backup DNS
+export MAC4_IP="10.7.17.93"             # Ankita    - Backend B :3002 + standby edge + client
 
 # ---- Real On-The-Air MACs (Wireshark / 802.11 frames) ----
 # KEEP THESE AS-IS until separately re-measured.
-export MAC1_AIR_MAC="de:ee:5b:31:fc:1a"
-export MAC2_AIR_MAC="06:a4:46:65:eb:bd"
+export MAC1_AIR_MAC="d2:de:13:78:fa:39"
+export MAC2_AIR_MAC="26:6d:dc:6e:22:ed"
 export MAC3_AIR_MAC="8e:c9:23:39:6e:c1"
 export MAC4_AIR_MAC="da:8e:64:df:05:3f"
 

@@ -3,6 +3,6 @@
 # Same-host traffic (loopback) is always allowed.
 pass in quick on lo0 all
 # ONLY the edge (Mac 2) may open TCP connections to the backend port
-pass in quick proto tcp from 10.7.7.179 to any port 3001 keep state
+pass in quick proto tcp from 10.7.26.115 to any port 3001 keep state
 # Everyone else: silently dropped (client sees a TIMEOUT, not 'connection refused')
 block drop in quick proto tcp from any to any port 3001
