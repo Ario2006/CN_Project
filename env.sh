@@ -39,8 +39,8 @@ export BACKEND_B_PORT="${BACKEND_B_PORT:-3002}"
 export HTTPS_PORT="${HTTPS_PORT:-443}"
 
 # ---- Upstream Resolvers ----
-export UPSTREAM_DNS_1="10.5.7.1"         # campus resolver
-export UPSTREAM_DNS_2=""                 # no public fallback
+export UPSTREAM_DNS_1="8.8.8.8"           # from DHCP (campus 10.5.7.1 unreachable on 24 Nov)
+export UPSTREAM_DNS_2="10.5.7.1"          # campus resolver (fallback)
 
 # ======================= PHASE 2 =======================
 # Ext A - backup DNS resolver (must NOT be Mac 1). Default: Mac 3 (Abhijeet).

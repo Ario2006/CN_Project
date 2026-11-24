@@ -10,7 +10,7 @@ say "Now the primary DNS service dies (dnsmasq stopped on Mac 1)."
 run "'$ROOT/scripts/dns-ctl.sh' primary stop"
 run "'$ROOT/scripts/dns-failover-check.sh' --flush"
 say "Primary DOWN, backup answered (SERVER line = Mac 3), and HTTPS still works. Mac 3's log proves who answered:"
-on mac3 "grep 'query\[A\] $APP' /tmp/dnsmasq-cn-backup.log | tail -n 3"
+on mac3 "grep -i 'query\[A\] $APP' /tmp/dnsmasq-cn-backup.log | tail -n 3"
 pause
 say "DNS failure vs app failure: no DNS = 'Could not resolve host', no TCP at all. Backends down = name resolves, TLS works, edge returns 502."
 run "'$ROOT/scripts/dns-ctl.sh' primary start"

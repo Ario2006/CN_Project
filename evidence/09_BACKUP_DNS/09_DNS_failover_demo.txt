@@ -1,0 +1,82 @@
+# 2026-11-24 23:26:06 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ demo/09a-backup-dns.sh
+
+
+>> Two resolvers with the SAME records: primary Mac 1 (10.7.20.4), backup Mac 3 (10.7.18.174). Clients list both, in order.
+[mac3]$ scripts/dns-ctl.sh backup status
+  OK    dnsmasq backup RUNNING (pid 10889) on 10.7.18.174:53
+$ dig +time=1 +tries=1 @10.7.18.174 app.teamTeamCN.test +noall +answer
+
+; <<>> DiG 9.10.6 <<>> +time=1 +tries=1 @10.7.18.174 app.teamTeamCN.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+app.teamTeamCN.test.	30	IN	A	10.7.26.115
+$ diff <(grep record '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/dns/team-dnsmasq.conf') <(grep record '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/dns/team-dnsmasq-backup.conf') && echo 'records identical'
+records identical
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/set-client-dns.sh' both
+[23:26:10] DNS cache flushed
+networksetup: 10.7.20.4 10.7.18.174 
+  scutil resolver#1   nameserver[0] : 10.7.20.4
+  scutil resolver#1   nameserver[1] : 10.7.18.174
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/dns-failover-check.sh' --flush
+[23:26:10] cache flushed (forces a real query)
+== Configured resolvers (order matters) ==
+networksetup: 10.7.20.4 10.7.18.174 
+resolv.conf : nameserver 10.7.20.4
+resolv.conf : nameserver 10.7.18.174
+
+== Each DNS server queried directly (2 s timeout) ==
+UP    PRIMARY Mac1 (10.7.20.4) -> 10.7.26.115
+UP    BACKUP Mac 3 (Abhijeet) (10.7.18.174) -> 10.7.26.115
+
+== What the client actually used (dig walks resolv.conf in order) ==
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 58426
+app.teamTeamCN.test.	30	IN	A	10.7.26.115
+;; Query time: 53 msec
+;; SERVER: 10.7.20.4#53(10.7.20.4)
+
+== System resolver (what curl/Safari use) ==
+ip_address: 10.7.26.115
+
+curl https://app.teamTeamCN.test -> HTTP 200 via 10.7.26.115
+
+>> Now the primary DNS service dies (dnsmasq stopped on Mac 1).
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/dns-ctl.sh' primary stop
+$ sudo pkill -f 'dnsmasq -k -C /Users/aryankumar/Desktop/All Projects/CN/CN_Project/dns/team-dnsmasq.conf'
+[23:26:11] stopped primary DNS
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/dns-failover-check.sh' --flush
+[23:26:11] cache flushed (forces a real query)
+== Configured resolvers (order matters) ==
+networksetup: 10.7.20.4 10.7.18.174 
+resolv.conf : nameserver 10.7.20.4
+resolv.conf : nameserver 10.7.18.174
+
+== Each DNS server queried directly (2 s timeout) ==
+DOWN  PRIMARY Mac1 (10.7.20.4) -> no answer
+UP    BACKUP Mac 3 (Abhijeet) (10.7.18.174) -> 10.7.26.115
+
+== What the client actually used (dig walks resolv.conf in order) ==
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 62914
+app.teamTeamCN.test.	30	IN	A	10.7.26.115
+;; Query time: 84 msec
+;; SERVER: 10.7.18.174#53(10.7.18.174)
+
+== System resolver (what curl/Safari use) ==
+ip_address: 10.7.26.115
+
+curl https://app.teamTeamCN.test -> HTTP 200 via 10.7.26.115
+
+>> Primary DOWN, backup answered (SERVER line = Mac 3), and HTTPS still works. Mac 3's log proves who answered:
+[mac3]$ grep 'query\[A\] app.teamTeamCN.test' /tmp/dnsmasq-cn-backup.log | tail -n 3
+
+>> DNS failure vs app failure: no DNS = 'Could not resolve host', no TCP at all. Backends down = name resolves, TLS works, edge returns 502.
+$ '/Users/aryankumar/Desktop/All Projects/CN/CN_Project/scripts/dns-ctl.sh' primary start
+dnsmasq: syntax check OK.
+[23:26:16] started primary DNS  (log: /tmp/dnsmasq-cn-primary.log)
+  OK    dnsmasq primary RUNNING (pid 51931) on 10.7.20.4:53
+$ dig +time=1 +tries=1 @10.7.20.4 app.teamTeamCN.test +noall +answer
+
+; <<>> DiG 9.10.6 <<>> +time=1 +tries=1 @10.7.20.4 app.teamTeamCN.test +noall +answer
+; (1 server found)
+;; global options: +cmd
+app.teamTeamCN.test.	30	IN	A	10.7.26.115
