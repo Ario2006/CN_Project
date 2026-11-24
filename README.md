@@ -13,6 +13,7 @@ This project explores computer networking from the physical and data link layers
 > *"The network is the project — the services exist to illuminate the protocols."*
 
 > **Phase 2 (Harden & Recover), complete:** backup DNS, TTL cutover, pf service isolation, nginx HA failover, standby-edge DNS migration, layer-by-layer troubleshooting.
+> **Share these PDFs:** [Evaluation Day Guide](docs/CN_Evaluation_Day_Guide.pdf) · [Project Explanation & Viva Prep](docs/CN_Project_Explanation_and_Viva.pdf)
 > Start here: **[docs/EVAL_PLAN.md](docs/EVAL_PLAN.md)** (evaluation-day sequence) · [docs/PHASE2_RUNBOOK.md](docs/PHASE2_RUNBOOK.md) · [docs/PHASE2_REPORT.md](docs/PHASE2_REPORT.md) · [docs/COOKBOOK.md](docs/COOKBOOK.md) (live change recipes) · [docs/PHASE2_VIVA.md](docs/PHASE2_VIVA.md) · [docs/ANKITA_MAC4.md](docs/ANKITA_MAC4.md) · [docs/architecture.md](docs/architecture.md) · [docs/ip-service-inventory.md](docs/ip-service-inventory.md)
 > One command health check: `scripts/preflight.sh` · Demo scripts: `demo/00-preflight.sh` … `demo/10-diagnose.sh`
 
