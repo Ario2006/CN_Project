@@ -41,3 +41,25 @@ export HTTPS_PORT="443"
 # ---- Upstream Resolvers ----
 export UPSTREAM_DNS_1="10.5.7.1"         # campus resolver
 export UPSTREAM_DNS_2=""                 # no public fallback
+
+# ======================= PHASE 2 =======================
+# Ext A - backup DNS resolver (must NOT be Mac 1). Default: Mac 3 (Abhijeet).
+export BACKUP_DNS_IP="${MAC3_IP}"
+export BACKUP_DNS_LABEL="Mac 3 (Abhijeet)"
+
+# Ext E - standby edge nginx (same config as Mac 2). Default: Mac 4 (Ankita).
+export STANDBY_EDGE_IP="${MAC4_IP}"
+export STANDBY_EDGE_LABEL="Mac 4 (Ankita)"
+
+# Ext B/E - where app.$DOMAIN points. scripts/dns-set-app.sh overrides this per run.
+# api.$DOMAIN always stays on the primary edge (Mac 2) as a control record.
+export APP_RECORD_IP="${APP_RECORD_IP:-$MAC2_IP}"
+export DNS_TTL="30"                       # seconds; visible in dig ANSWER section
+
+# Ext C - extra source IPs allowed to reach backend ports (space separated). Keep EMPTY
+# for the demo (only Mac 2 may reach 3001/3002).
+export FIREWALL_EXTRA_ALLOW="${FIREWALL_EXTRA_ALLOW:-}"
+
+# Where brew's nginx finds the cert on EVERY edge machine (Apple Silicon default).
+# Intel Mac edge? use /usr/local/etc/nginx/certs
+export CERT_DIR="${CERT_DIR:-/opt/homebrew/etc/nginx/certs}"

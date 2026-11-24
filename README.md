@@ -12,6 +12,8 @@ This project explores computer networking from the physical and data link layers
 
 > *"The network is the project — the services exist to illuminate the protocols."*
 
+> **Phase 2 (Harden & Recover):** backup DNS, TTL cutover, pf service isolation, nginx HA failover, standby-edge DNS migration and layer-by-layer troubleshooting. See [docs/PHASE2_RUNBOOK.md](docs/PHASE2_RUNBOOK.md), [docs/PHASE2_REPORT.md](docs/PHASE2_REPORT.md) and [docs/PHASE2_VIVA.md](docs/PHASE2_VIVA.md).
+
 ---
 
 ## Table of Contents
