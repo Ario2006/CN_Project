@@ -1,0 +1,25 @@
+# 2026-11-24 23:33:25 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ scripts/diagnose.sh
+
+
+[1] LAN / L3 - am I on the network?
+  OK   this Mac 10.7.20.4 on en0, gateway 10.7.0.1
+  OK   ping DNS Mac1 10.7.20.4
+
+[2] DNS - does the name resolve, via whom, to what?
+       resolvers: 10.7.20.4 10.7.18.174 
+  OK   team DNS server is configured
+       dig @10.7.20.4 -> 10.7.26.115
+       dig @10.7.18.174 -> 10.7.26.115
+  OK   system resolver: app.teamTeamCN.test -> 10.7.26.115
+  OK   points to primary edge Mac 2
+
+[3] IP reachability to 10.7.26.115
+  OK   ping 10.7.26.115
+       ARP: 10.7.26.115 is-at 26:6d:dc:6e:22:ed
+
+[4] TCP - is anything listening on 10.7.26.115:443?
+       nc: connectx to 10.7.26.115 port 443 (tcp) failed: Connection refused
+
+==> FAULT LAYER: L4 TCP (connection refused = RST)
+    Host is up but nothing listens on 443: nginx stopped / listening on another port / wrong port in URL. On edge: scripts/diagnose-edge.sh

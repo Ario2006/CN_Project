@@ -9,7 +9,11 @@ NAME="${1:-app.$DOMAIN}"; P="${2:-/api/status}"; PORT="$HTTPS_PORT"
 ok(){ printf '  \033[32mOK\033[0m   %s\n' "$*"; }
 bad(){ printf '  \033[31mFAIL\033[0m %s\n' "$*"; }
 info(){ printf '       %s\n' "$*"; }
-verdict(){ printf '\n\033[1;31m==> FAULT LAYER: %s\033[0m\n    %s\n' "$1" "$2"; exit 1; }
+WRONG=""
+verdict(){
+  printf '\n\033[1;31m==> FAULT LAYER: %s\033[0m\n    %s\n' "$1" "$2"
+  [ -n "$WRONG" ] && printf '\033[1;31m==> ROOT CAUSE: DNS DATA - %s resolves to %s, which is not an edge. Resolution WORKS but the directory entry is wrong.\033[0m\n    Fix the record on BOTH DNS servers (scripts/dns-set-app.sh primary) and flush client caches.\n' "$NAME" "$WRONG"
+  exit 1; }
 hdr(){ printf '\n\033[1m[%s] %s\033[0m\n' "$1" "$2"; }
 
 hdr 1 "LAN / L3 - am I on the network?"
@@ -33,7 +37,7 @@ ok "system resolver: $NAME -> $IP"
 case "$IP" in
   "$MAC2_IP") ok "points to primary edge Mac 2";;
   "$STANDBY_EDGE_IP") info "points to STANDBY edge ($STANDBY_EDGE_LABEL) - expected only after an Ext E cutover";;
-  *) bad "points to $IP which is NOT an edge (expected $MAC2_IP) -> wrong DNS record? (DNS works, but it's a directory with a wrong entry)";;
+  *) bad "points to $IP which is NOT an edge (expected $MAC2_IP) -> wrong DNS record? (DNS works, but it's a directory with a wrong entry)"; WRONG="$IP";;
 esac
 
 hdr 3 "IP reachability to $IP"
@@ -75,4 +79,11 @@ case "$CODE" in
   404) verdict "Application (path)" "Edge+backend reachable but path $P unknown, or wrong server_name/location";;
   *) verdict "Application/HTTP (status ${CODE:-none})" "Read the headers above; check /tmp/nginx-cn-error.log on the edge";;
 esac
-echo; echo "All layers OK. Load-balancing check:"; for i in 1 2 3 4; do /usr/bin/curl -s -m 3 -o /dev/null -D - "https://$NAME:$PORT$P" | tr -d '\r' | grep -i '^x-backend' ; done
+hdr 7 "Backend pool - are BOTH backends serving? (failover can hide a dead backend)"
+SEEN=""; for i in 1 2 3 4 5 6; do b="$(/usr/bin/curl -s -m 4 -o /dev/null -D - "https://$NAME:$PORT$P" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-backend"{print $2}')"; SEEN="$SEEN${b:--}"; done
+info "6 requests -> X-Backend: $SEEN"
+case "$SEEN" in
+  *A*B*|*B*A*) ok "both backends serving"; printf '\n\033[1;32m==> ALL LAYERS OK end-to-end\033[0m\n';;
+  *) M="A"; case "$SEEN" in *A*) M="B";; esac
+     verdict "Backend tier DEGRADED (behind the edge)" "Only $(echo "$SEEN" | tr -d '-' | cut -c1) answers: nginx is failing over around Backend $M. Users see 200s, but redundancy is gone. Check Backend $M process/port, nginx upstream line (port typo?), pf on the backend. On Mac 2: scripts/diagnose-edge.sh (shows TCP/HTTP to each upstream) + /tmp/nginx-cn-error.log";;
+esac

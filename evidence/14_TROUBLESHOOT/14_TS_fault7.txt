@@ -1,0 +1,42 @@
+# 2026-11-24 23:35:15 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ scripts/diagnose.sh
+
+
+[1] LAN / L3 - am I on the network?
+  OK   this Mac 10.7.20.4 on en0, gateway 10.7.0.1
+  OK   ping DNS Mac1 10.7.20.4
+
+[2] DNS - does the name resolve, via whom, to what?
+       resolvers: 10.7.20.4 10.7.18.174 
+  OK   team DNS server is configured
+       dig @10.7.20.4 -> 10.7.26.115
+       dig @10.7.18.174 -> 10.7.26.115
+  OK   system resolver: app.teamTeamCN.test -> 10.7.26.115
+  OK   points to primary edge Mac 2
+
+[3] IP reachability to 10.7.26.115
+  OK   ping 10.7.26.115
+       ARP: 10.7.26.115 is-at 26:6d:dc:6e:22:ed
+
+[4] TCP - is anything listening on 10.7.26.115:443?
+       Connection to 10.7.26.115 port 443 [tcp/https] succeeded!
+  OK   TCP 3-way handshake to 10.7.26.115:443 completed
+
+[5] TLS - handshake, certificate chain, name match
+       New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+       subject: subject=O=mkcert development certificate, OU=ranajeetroy@Ranajeets-MacBook-Pro.local (Ranajeet Roy)
+       SAN    : DNS:app.teamTeamCN.test, DNS:api.teamTeamCN.test
+       valid  : notAfter=Feb 24 17:47:58 2029 GMT
+  OK   certificate trusted and matches app.teamTeamCN.test (curl, no -k)
+
+[6] HTTP / application - what does the edge return?
+       HTTP/1.1 200 OK Server: nginx/1.27.0 X-Backend: B X-Edge: primary 
+       body: {"backend": "B", "status": "ok"}
+       edge's own /edge-health (no backend involved): HTTP 200
+  OK   HTTP 200 - service healthy end-to-end
+
+[7] Backend pool - are BOTH backends serving? (failover can hide a dead backend)
+       6 requests -> X-Backend: BBBBBB
+
+==> FAULT LAYER: Backend tier DEGRADED (behind the edge)
+    Only B answers: nginx is failing over around Backend A. Users see 200s, but redundancy is gone. Check Backend A process/port, nginx upstream line (port typo?), pf on the backend. On Mac 2: scripts/diagnose-edge.sh (shows TCP/HTTP to each upstream) + /tmp/nginx-cn-error.log

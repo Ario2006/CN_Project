@@ -1,0 +1,28 @@
+# 2026-11-24 23:33:09 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ scripts/diagnose.sh
+
+
+[1] LAN / L3 - am I on the network?
+  OK   this Mac 10.7.20.4 on en0, gateway 10.7.0.1
+  OK   ping DNS Mac1 10.7.20.4
+
+[2] DNS - does the name resolve, via whom, to what?
+       resolvers: 10.7.20.4 10.7.18.174 
+  OK   team DNS server is configured
+       dig @10.7.20.4 -> 10.7.0.250
+       dig @10.7.18.174 -> 10.7.0.250
+  OK   system resolver: app.teamTeamCN.test -> 10.7.0.250
+  FAIL points to 10.7.0.250 which is NOT an edge (expected 10.7.26.115) -> wrong DNS record? (DNS works, but it's a directory with a wrong entry)
+
+[3] IP reachability to 10.7.0.250
+  FAIL no ICMP reply from 10.7.0.250
+       host down / wrong IP / ICMP filtered - TCP test decides
+       ARP: 10.7.0.250 is-at (incomplete)
+
+[4] TCP - is anything listening on 10.7.0.250:443?
+       nc: connectx to 10.7.0.250 port 443 (tcp) failed: Host is down
+
+==> FAULT LAYER: L3/L4 (timeout, no SYN-ACK)
+    Packets dropped: host off, wrong IP, or a firewall (pf) dropping 443. Check pfctl -s info on 10.7.0.250
+==> ROOT CAUSE: DNS DATA - app.teamTeamCN.test resolves to 10.7.0.250, which is not an edge. Resolution WORKS but the directory entry is wrong.
+    Fix the record on BOTH DNS servers (scripts/dns-set-app.sh primary) and flush client caches.

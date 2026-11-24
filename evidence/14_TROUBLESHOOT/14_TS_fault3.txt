@@ -1,0 +1,16 @@
+# 2026-11-24 23:33:51 | host MacBook-Pro-88 | IP 10.7.20.4 | role mac1
+# $ scripts/diagnose.sh
+
+
+[1] LAN / L3 - am I on the network?
+  OK   this Mac 10.7.20.4 on en0, gateway 10.7.0.1
+  OK   ping DNS Mac1 10.7.20.4
+
+[2] DNS - does the name resolve, via whom, to what?
+       resolvers: 10.7.20.4 10.7.18.174 
+  OK   team DNS server is configured
+       dig @10.7.20.4 -> no answer
+       dig @10.7.18.174 -> no answer
+
+==> FAULT LAYER: DNS (name resolution)
+    Name does not resolve. dnsmasq running on Mac1/backup? client resolver list? record exists? (dig @server shows above)
